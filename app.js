@@ -1,69 +1,111 @@
+// 🔥 ELEMENTS
 const dropZone = document.getElementById("drop-zone");
 const fileInput = document.getElementById("fileInput");
+const progressBar = document.getElementById("progress");
+const statusText = document.getElementById("status");
+const tableBody = document.querySelector("#resultsTable tbody");
+const downloadLink = document.getElementById("downloadLink");
 
+// 📁 FILE INTERACTIONS
 dropZone.addEventListener("click", () => fileInput.click());
+
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.style.background = "#1e293b";
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.style.background = "transparent";
+});
 
 dropZone.addEventListener("drop", (e) => {
   e.preventDefault();
   fileInput.files = e.dataTransfer.files;
 });
 
-async function uploadCSV() {
+// 🚀 MAIN FUNCTION
+window.uploadCSV = async function () {
   const file = fileInput.files[0];
 
   if (!file) {
-    alert("Upload CSV");
+    alert("Upload a CSV file first");
     return;
   }
+
+  if (!window.userToken) {
+    alert("You must be logged in");
+    return;
+  }
+
+  // Reset UI
+  progressBar.style.width = "0%";
+  statusText.innerText = "Starting...";
+  tableBody.innerHTML = "";
+  downloadLink.style.display = "none";
 
   const formData = new FormData();
   formData.append("file", file);
 
-  const progress = document.getElementById("progress");
-  progress.style.width = "30%";
+  try {
+    // 🔄 Progress
+    progressBar.style.width = "20%";
+    statusText.innerText = "Uploading...";
 
-  document.getElementById("status").innerText = "Processing...";
+    const response = await fetch(
+      "https://identity-backend-5jax.onrender.com/bulk-enrich",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + window.userToken
+        },
+        body: formData
+      }
+    );
 
-  const res = await fetch(
-    "https://identity-backend-5jax.onrender.com/bulk-enrich",
-    {
-      method: "POST",
-      body: formData
+    if (!response.ok) {
+      throw new Error("API error: " + response.status);
     }
-  );
 
-  progress.style.width = "70%";
+    progressBar.style.width = "60%";
+    statusText.innerText = "Processing...";
 
-  const blob = await res.blob();
-  const text = await blob.text();
+    const blob = await response.blob();
+    const text = await blob.text();
 
-  const rows = text.split("\n").slice(1);
+    progressBar.style.width = "80%";
 
-  const table = document.querySelector("#resultsTable tbody");
-  table.innerHTML = "";
+    // 📊 Parse CSV
+    const rows = text.split("\n");
+    const headers = rows[0].split(",");
 
-  rows.forEach(row => {
-    if (!row) return;
+    rows.slice(1).forEach((row) => {
+      if (!row.trim()) return;
 
-    const cols = row.split(",");
+      const cols = row.split(",");
 
-    const tr = document.createElement("tr");
+      const tr = document.createElement("tr");
 
-    cols.slice(0,6).forEach(c => {
-      const td = document.createElement("td");
-      td.innerText = c;
-      tr.appendChild(td);
+      headers.forEach((_, index) => {
+        const td = document.createElement("td");
+        td.innerText = cols[index] || "";
+        tr.appendChild(td);
+      });
+
+      tableBody.appendChild(tr);
     });
 
-    table.appendChild(tr);
-  });
+    // 📥 Download
+    const url = window.URL.createObjectURL(blob);
+    downloadLink.href = url;
+    downloadLink.style.display = "block";
+    downloadLink.innerText = "Download CSV";
 
-  const url = window.URL.createObjectURL(blob);
+    progressBar.style.width = "100%";
+    statusText.innerText = "✅ Done";
 
-  const link = document.getElementById("downloadLink");
-  link.href = url;
-  link.style.display = "block";
-
-  progress.style.width = "100%";
-  document.getElementById("status").innerText = "Done!";
-}
+  } catch (err) {
+    console.error(err);
+    statusText.innerText = "❌ Error";
+    progressBar.style.width = "0%";
+  }
+};
