@@ -1,20 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Identity Finder</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <div class="container">
-    <h1>🔍 Identity Finder</h1>
+<div class="container">
+  <h1>🔍 Identity Finder</h1>
+  <p>Upload emails → Get social + YouTube data</p>
 
-    <input id="email" placeholder="Enter email..." />
-    <button onclick="search()">Search</button>
-
-    <div id="results"></div>
+  <div class="upload-box" id="drop-zone">
+    <p>Drag & drop CSV here or click to upload</p>
+    <input type="file" id="fileInput" hidden />
   </div>
 
-  <script src="app.js"></script>
+  <button onclick="uploadCSV()">Process File</button>
+
+  <div id="status"></div>
+
+  <a id="downloadLink" style="display:none;" download>
+    Download Results
+  </a>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
