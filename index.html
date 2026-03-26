@@ -9,11 +9,10 @@
       background: #0f172a;
       color: white;
       margin: 0;
-      padding: 0;
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: auto;
       padding: 20px;
     }
@@ -29,7 +28,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
     }
 
     button {
@@ -45,16 +43,16 @@
     input {
       width: 100%;
       padding: 10px;
-      margin-top: 10px;
       border-radius: 6px;
       border: none;
+      margin-top: 10px;
     }
 
     #drop-zone {
       border: 2px dashed #475569;
-      padding: 30px;
+      padding: 25px;
       text-align: center;
-      margin: 15px 0;
+      margin-top: 10px;
       cursor: pointer;
       border-radius: 10px;
     }
@@ -68,21 +66,22 @@
     th, td {
       padding: 10px;
       border-bottom: 1px solid #334155;
+      text-align: left;
     }
 
     th {
       background: #334155;
     }
 
-    #loginPage {
-      max-width: 400px;
-      margin: 120px auto;
-    }
-
     .disclaimer {
       font-size: 12px;
       color: #94a3b8;
       margin-top: 10px;
+    }
+
+    #loginPage {
+      max-width: 400px;
+      margin: 120px auto;
     }
   </style>
 </head>
@@ -110,32 +109,29 @@
       </div>
     </div>
 
-    <!-- 🔥 SINGLE EMAIL SEARCH -->
+    <!-- 🔥 SINGLE EMAIL -->
     <div class="card">
       <h3>Quick Email Lookup</h3>
-
-      <input id="singleEmail" placeholder="Enter email (e.g. repphill@gmail.com)">
+      <input id="singleEmail" placeholder="Enter email">
       <button onclick="searchSingle()">Search</button>
-
       <p id="singleStatus"></p>
     </div>
 
-    <!-- 📂 CSV UPLOAD -->
+    <!-- 📂 CSV -->
     <div class="card">
       <h3>Upload CSV</h3>
 
       <div id="drop-zone">Click or drag CSV file here</div>
-      <input type="file" id="fileInput" hidden />
+      <input type="file" id="fileInput" hidden>
 
       <button onclick="uploadCSV()">Process</button>
 
-      <!-- 🔥 DISCLAIMER -->
       <div class="disclaimer">
-        CSV must be formatted exactly as:<br><br>
+        CSV format:<br><br>
         <b>email</b><br>
         example@email.com<br>
-        another@email.com<br><br>
-        • Column name must be <b>email</b> (lowercase)<br>
+        test@email.com<br><br>
+        • Must be lowercase "email"<br>
         • One email per row<br>
         • No extra columns
       </div>
@@ -159,6 +155,7 @@
             <th>YouTube</th>
             <th>Subscribers</th>
             <th>Confidence</th>
+            <th>Score</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -172,62 +169,124 @@
 </div>
 
 <script type="module" src="auth.js"></script>
+<script src="app.js"></script>
 
 <script>
+function makeLink(url) {
+  if (!url || url === "") return "-";
+  return `<a href="${url}" target="_blank">Open</a>`;
+}
+
+// 🔍 SINGLE SEARCH
 async function searchSingle() {
   const email = document.getElementById("singleEmail").value;
   const status = document.getElementById("singleStatus");
 
-  if (!email) {
-    status.innerText = "Please enter an email";
-    return;
-  }
+  if (!email) return;
 
   status.innerText = "Searching...";
 
-  const token = window.userToken;
-
   const res = await fetch("https://identity-backend-5jax.onrender.com/enrich?email=" + email, {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + token
-    }
+    method: "POST"
   });
 
   const data = await res.json();
 
-  renderSingleResult(data);
-  status.innerText = "Done";
-}
-
-function renderSingleResult(data) {
   const tbody = document.querySelector("#resultsTable tbody");
   tbody.innerHTML = "";
-
-  const row = document.createElement("tr");
 
   const socials = {};
   data.social_profiles.forEach(s => socials[s.platform] = s.url);
 
   const youtube = data.youtube_channels[0] || {};
 
-  row.innerHTML = `
-    <td>${data.email}</td>
-    <td>${data.company}</td>
-    <td><a href="${socials["LinkedIn"] || ""}" target="_blank">Link</a></td>
-    <td><a href="${socials["Twitter/X"] || ""}" target="_blank">Link</a></td>
-    <td><a href="${socials["Instagram"] || ""}" target="_blank">Link</a></td>
-    <td><a href="${socials["Facebook"] || ""}" target="_blank">Link</a></td>
-    <td><a href="${youtube.url || ""}" target="_blank">Link</a></td>
-    <td>${youtube.subscribers || ""}</td>
-    <td>${data.confidence || ""}</td>
+  let color = "#ef4444";
+  if (data.confidence === "high") color = "#22c55e";
+  if (data.confidence === "medium") color = "#facc15";
+
+  const row = `
+    <tr>
+      <td>${data.email}</td>
+      <td>${data.company}</td>
+      <td>${makeLink(socials["LinkedIn"])}</td>
+      <td>${makeLink(socials["Twitter/X"])}</td>
+      <td>${makeLink(socials["Instagram"])}</td>
+      <td>${makeLink(socials["Facebook"])}</td>
+      <td>${makeLink(youtube.url)}</td>
+      <td>${youtube.subscribers || "-"}</td>
+      <td style="color:${color}; font-weight:bold;">${data.confidence}</td>
+      <td>${data.score}</td>
+    </tr>
   `;
 
-  tbody.appendChild(row);
+  tbody.innerHTML = row;
+  status.innerText = "Done";
+}
+
+// 📂 BULK CSV
+async function uploadCSV() {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+
+  if (!file) return alert("Select file");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("https://identity-backend-5jax.onrender.com/bulk-enrich", {
+    method: "POST",
+    body: formData
+  });
+
+  const blob = await res.blob();
+  const text = await blob.text();
+
+  parseCSVToTable(text);
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.getElementById("downloadLink");
+  link.href = url;
+  link.style.display = "block";
+  link.innerText = "Download CSV";
+}
+
+// 📊 PARSE CSV → TABLE
+function parseCSVToTable(csvText) {
+  const rows = csvText.trim().split("\n").slice(1);
+  const tbody = document.querySelector("#resultsTable tbody");
+  tbody.innerHTML = "";
+
+  rows.forEach(row => {
+    if (!row) return;
+
+    const cols = row.split(",");
+
+    let confidence = cols[8];
+    let score = cols[9];
+
+    let color = "#ef4444";
+    if (confidence === "high") color = "#22c55e";
+    if (confidence === "medium") color = "#facc15";
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${cols[0]}</td>
+      <td>${cols[1]}</td>
+      <td>${makeLink(cols[2])}</td>
+      <td>${makeLink(cols[3])}</td>
+      <td>${makeLink(cols[4])}</td>
+      <td>${makeLink(cols[5])}</td>
+      <td>${makeLink(cols[6])}</td>
+      <td>${cols[7] || "-"}</td>
+      <td style="color:${color}; font-weight:bold;">${confidence}</td>
+      <td>${score}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
 }
 </script>
-
-<script src="app.js"></script>
 
 </body>
 </html>
