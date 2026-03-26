@@ -2,11 +2,19 @@
 <html>
 <head>
   <title>Identity Finder</title>
+
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: #0f172a;
       color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
       padding: 20px;
     }
 
@@ -15,7 +23,31 @@
       padding: 20px;
       border-radius: 12px;
       margin-bottom: 20px;
-      max-width: 500px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    button {
+      background: #22c55e;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+      margin-left: 10px;
+    }
+
+    button:hover {
+      background: #16a34a;
     }
 
     input {
@@ -26,28 +58,29 @@
       border: none;
     }
 
-    button {
-      background: #22c55e;
-      border: none;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
+    #drop-zone {
+      border: 2px dashed #475569;
+      padding: 30px;
+      text-align: center;
+      margin: 15px 0;
       cursor: pointer;
-      color: white;
-    }
-
-    #appPage {
-      display: none;
+      border-radius: 10px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 15px;
     }
 
     th, td {
       padding: 10px;
       border-bottom: 1px solid #334155;
+      font-size: 14px;
+    }
+
+    th {
+      background: #334155;
     }
 
     #progressBar {
@@ -63,12 +96,21 @@
       height: 10px;
       background: #22c55e;
     }
+
+    #loginPage {
+      max-width: 400px;
+      margin: 120px auto;
+    }
+
+    a {
+      color: #22c55e;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- 🔐 LOGIN PAGE -->
+<!-- 🔐 LOGIN -->
 <div id="loginPage" class="card">
   <h2>Login</h2>
   <input id="username" placeholder="Email">
@@ -76,54 +118,60 @@
   <button onclick="login()">Login</button>
 </div>
 
-<!-- 🚀 APP PAGE -->
-<div id="appPage">
+<!-- 🚀 APP -->
+<div id="appPage" style="display:none;">
+  <div class="container">
 
-  <h1>🔍 Identity Finder</h1>
-
-  <div class="card">
-    <button onclick="logout()">Logout</button>
-    <button onclick="startCheckout()">Upgrade 🚀</button>
-  </div>
-
-  <div class="card">
-    <h3>Upload CSV</h3>
-
-    <div id="drop-zone">Click or drag CSV file here</div>
-    <input type="file" id="fileInput" hidden />
-
-    <button onclick="uploadCSV()">Process</button>
-
-    <div id="progressBar">
-      <div id="progress"></div>
+    <!-- HEADER -->
+    <div class="header">
+      <h1>🔍 Identity Finder</h1>
+      <div>
+        <button onclick="startCheckout()">Upgrade 🚀</button>
+        <button onclick="logout()">Logout</button>
+      </div>
     </div>
 
-    <p id="status"></p>
+    <!-- UPLOAD -->
+    <div class="card">
+      <h3>Upload CSV</h3>
+
+      <div id="drop-zone">Click or drag CSV file here</div>
+      <input type="file" id="fileInput" hidden />
+
+      <button onclick="uploadCSV()">Process</button>
+
+      <div id="progressBar">
+        <div id="progress"></div>
+      </div>
+
+      <p id="status"></p>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="card">
+      <h3>Results</h3>
+
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Company</th>
+            <th>LinkedIn</th>
+            <th>Twitter</th>
+            <th>Instagram</th>
+            <th>Facebook</th>
+            <th>YouTube</th>
+            <th>Subscribers</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <br>
+      <a id="downloadLink" style="display:none;">Download CSV</a>
+    </div>
+
   </div>
-
-  <div class="card">
-    <h3>Results</h3>
-
-    <table id="resultsTable">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Company</th>
-          <th>LinkedIn</th>
-          <th>Twitter</th>
-          <th>Instagram</th>
-          <th>Facebook</th>
-          <th>YouTube</th>
-          <th>Subscribers</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <br>
-    <a id="downloadLink" style="display:none;">Download CSV</a>
-  </div>
-
 </div>
 
 <script type="module" src="auth.js"></script>
