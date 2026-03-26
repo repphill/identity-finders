@@ -109,7 +109,7 @@
       </div>
     </div>
 
-    <!-- 🔥 SINGLE EMAIL -->
+    <!-- SINGLE EMAIL -->
     <div class="card">
       <h3>Quick Email Lookup</h3>
       <input id="singleEmail" placeholder="Enter email">
@@ -117,7 +117,7 @@
       <p id="singleStatus"></p>
     </div>
 
-    <!-- 📂 CSV -->
+    <!-- CSV -->
     <div class="card">
       <h3>Upload CSV</h3>
 
@@ -172,12 +172,32 @@
 <script src="app.js"></script>
 
 <script>
+// =========================
+// 🔗 SAFE LINK
+// =========================
 function makeLink(url) {
   if (!url || url === "") return "-";
   return `<a href="${url}" target="_blank">Open</a>`;
 }
 
+// =========================
+// 📂 FILE SELECT
+// =========================
+document.getElementById("drop-zone").addEventListener("click", () => {
+  document.getElementById("fileInput").click();
+});
+
+document.getElementById("fileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    document.getElementById("drop-zone").innerText = file.name;
+    console.log("Selected file:", file);
+  }
+});
+
+// =========================
 // 🔍 SINGLE SEARCH
+// =========================
 async function searchSingle() {
   const email = document.getElementById("singleEmail").value;
   const status = document.getElementById("singleStatus");
@@ -191,6 +211,8 @@ async function searchSingle() {
   });
 
   const data = await res.json();
+
+  console.log("Single result:", data);
 
   const tbody = document.querySelector("#resultsTable tbody");
   tbody.innerHTML = "";
@@ -223,43 +245,70 @@ async function searchSingle() {
   status.innerText = "Done";
 }
 
-// 📂 BULK CSV
+// =========================
+// 🚀 CSV UPLOAD (FIXED)
+// =========================
 async function uploadCSV() {
-  const fileInput = document.getElementById("fileInput");
-  const file = fileInput.files[0];
+  const file = document.getElementById("fileInput").files[0];
 
-  if (!file) return alert("Select file");
+  console.log("Uploading file:", file);
+
+  if (!file) {
+    alert("No file selected");
+    return;
+  }
 
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch("https://identity-backend-5jax.onrender.com/bulk-enrich", {
-    method: "POST",
-    body: formData
-  });
+  try {
+    const res = await fetch("https://identity-backend-5jax.onrender.com/bulk-enrich", {
+      method: "POST",
+      body: formData
+    });
 
-  const blob = await res.blob();
-  const text = await blob.text();
+    console.log("Response:", res.status);
 
-  parseCSVToTable(text);
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("Upload failed:", err);
+      alert("Upload failed");
+      return;
+    }
 
-  const url = window.URL.createObjectURL(blob);
-  const link = document.getElementById("downloadLink");
-  link.href = url;
-  link.style.display = "block";
-  link.innerText = "Download CSV";
+    const blob = await res.blob();
+    const text = await blob.text();
+
+    console.log("CSV response:", text);
+
+    parseCSVToTable(text);
+
+    const url = URL.createObjectURL(blob);
+    const link = document.getElementById("downloadLink");
+    link.href = url;
+    link.style.display = "block";
+    link.innerText = "Download CSV";
+
+  } catch (err) {
+    console.error("ERROR:", err);
+    alert("Upload error");
+  }
 }
 
-// 📊 PARSE CSV → TABLE
+// =========================
+// 📊 CSV → TABLE
+// =========================
 function parseCSVToTable(csvText) {
   const rows = csvText.trim().split("\n").slice(1);
   const tbody = document.querySelector("#resultsTable tbody");
+
   tbody.innerHTML = "";
 
   rows.forEach(row => {
     if (!row) return;
 
     const cols = row.split(",");
+    const tr = document.createElement("tr");
 
     let confidence = cols[8];
     let score = cols[9];
@@ -267,8 +316,6 @@ function parseCSVToTable(csvText) {
     let color = "#ef4444";
     if (confidence === "high") color = "#22c55e";
     if (confidence === "medium") color = "#facc15";
-
-    const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>${cols[0]}</td>
