@@ -10,53 +10,44 @@
       padding: 20px;
     }
 
-    h1 {
-      font-size: 28px;
-    }
-
     .card {
       background: #1e293b;
       padding: 20px;
       border-radius: 12px;
       margin-bottom: 20px;
+      max-width: 500px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
     }
 
     button {
       background: #22c55e;
       border: none;
-      padding: 10px 15px;
+      padding: 10px;
+      margin-top: 10px;
       border-radius: 6px;
       cursor: pointer;
       color: white;
-      margin-top: 10px;
     }
 
-    button:hover {
-      background: #16a34a;
-    }
-
-    #drop-zone {
-      border: 2px dashed #475569;
-      padding: 30px;
-      text-align: center;
-      margin-bottom: 10px;
-      cursor: pointer;
+    #appPage {
+      display: none;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
     }
 
     th, td {
       padding: 10px;
       border-bottom: 1px solid #334155;
-      text-align: left;
-    }
-
-    th {
-      background: #334155;
     }
 
     #progressBar {
@@ -72,58 +63,67 @@
       height: 10px;
       background: #22c55e;
     }
-
-    a {
-      color: #22c55e;
-    }
   </style>
 </head>
 
 <body>
 
-<h1>🔍 Identity Finder</h1>
-
-<div class="card">
-  <button onclick="logout()">Logout</button>
-  <button onclick="startCheckout()">Upgrade 🚀</button>
+<!-- 🔐 LOGIN PAGE -->
+<div id="loginPage" class="card">
+  <h2>Login</h2>
+  <input id="username" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
 </div>
 
-<div class="card">
-  <h3>Upload CSV</h3>
+<!-- 🚀 APP PAGE -->
+<div id="appPage">
 
-  <div id="drop-zone">Click or drag CSV file here</div>
-  <input type="file" id="fileInput" hidden />
+  <h1>🔍 Identity Finder</h1>
 
-  <button onclick="uploadCSV()">Process</button>
-
-  <div id="progressBar">
-    <div id="progress"></div>
+  <div class="card">
+    <button onclick="logout()">Logout</button>
+    <button onclick="startCheckout()">Upgrade 🚀</button>
   </div>
 
-  <p id="status"></p>
-</div>
+  <div class="card">
+    <h3>Upload CSV</h3>
 
-<div class="card">
-  <h3>Results</h3>
+    <div id="drop-zone">Click or drag CSV file here</div>
+    <input type="file" id="fileInput" hidden />
 
-  <table id="resultsTable">
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Company</th>
-        <th>LinkedIn</th>
-        <th>Twitter</th>
-        <th>Instagram</th>
-        <th>Facebook</th>
-        <th>YouTube</th>
-        <th>Subscribers</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <button onclick="uploadCSV()">Process</button>
 
-  <br>
-  <a id="downloadLink" style="display:none;">Download CSV</a>
+    <div id="progressBar">
+      <div id="progress"></div>
+    </div>
+
+    <p id="status"></p>
+  </div>
+
+  <div class="card">
+    <h3>Results</h3>
+
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Company</th>
+          <th>LinkedIn</th>
+          <th>Twitter</th>
+          <th>Instagram</th>
+          <th>Facebook</th>
+          <th>YouTube</th>
+          <th>Subscribers</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <br>
+    <a id="downloadLink" style="display:none;">Download CSV</a>
+  </div>
+
 </div>
 
 <script type="module" src="auth.js"></script>
