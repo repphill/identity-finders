@@ -196,62 +196,10 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
 });
 
 // =========================
-// 🔍 SINGLE SEARCH
-// =========================
-async function searchSingle() {
-  const email = document.getElementById("singleEmail").value;
-  const status = document.getElementById("singleStatus");
-
-  if (!email) return;
-
-  status.innerText = "Searching...";
-
-  const res = await fetch("https://identity-backend-5jax.onrender.com/enrich?email=" + email, {
-    method: "POST"
-  });
-
-  const data = await res.json();
-
-  console.log("Single result:", data);
-
-  const tbody = document.querySelector("#resultsTable tbody");
-  tbody.innerHTML = "";
-
-  const socials = {};
-  data.social_profiles.forEach(s => socials[s.platform] = s.url);
-
-  const youtube = data.youtube_channels[0] || {};
-
-  let color = "#ef4444";
-  if (data.confidence === "high") color = "#22c55e";
-  if (data.confidence === "medium") color = "#facc15";
-
-  const row = `
-    <tr>
-      <td>${data.email}</td>
-      <td>${data.company}</td>
-      <td>${makeLink(socials["LinkedIn"])}</td>
-      <td>${makeLink(socials["Twitter/X"])}</td>
-      <td>${makeLink(socials["Instagram"])}</td>
-      <td>${makeLink(socials["Facebook"])}</td>
-      <td>${makeLink(youtube.url)}</td>
-      <td>${youtube.subscribers || "-"}</td>
-      <td style="color:${color}; font-weight:bold;">${data.confidence}</td>
-      <td>${data.score}</td>
-    </tr>
-  `;
-
-  tbody.innerHTML = row;
-  status.innerText = "Done";
-}
-
-// =========================
-// 🚀 CSV UPLOAD (FIXED)
+// 🚀 CSV UPLOAD
 // =========================
 async function uploadCSV() {
   const file = document.getElementById("fileInput").files[0];
-
-  console.log("Uploading file:", file);
 
   if (!file) {
     alert("No file selected");
@@ -261,79 +209,77 @@ async function uploadCSV() {
   const formData = new FormData();
   formData.append("file", file);
 
-  try {
-    const res = await fetch("https://identity-backend-5jax.onrender.com/bulk-enrich", {
-      method: "POST",
-      body: formData
-    });
+  const res = await fetch("https://identity-backend-5jax.onrender.com/bulk-enrich", {
+    method: "POST",
+    body: formData
+  });
 
-    console.log("Response:", res.status);
-
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("Upload failed:", err);
-      alert("Upload failed");
-      return;
-    }
-
-    const blob = await res.blob();
-    const text = await blob.text();
-
-    console.log("CSV response:", text);
-
-    parseCSVToTable(text);
-
-    const url = URL.createObjectURL(blob);
-    const link = document.getElementById("downloadLink");
-    link.href = url;
-    link.style.display = "block";
-    link.innerText = "Download CSV";
-
-  } catch (err) {
-    console.error("ERROR:", err);
-    alert("Upload error");
+  if (!res.ok) {
+    alert("Upload failed");
+    return;
   }
+
+  const blob = await res.blob();
+  const text = await blob.text();
+
+  console.log("CSV RESPONSE:", text);
+
+  parseCSVToTable(text);
+
+  const url = URL.createObjectURL(blob);
+  const link = document.getElementById("downloadLink");
+  link.href = url;
+  link.style.display = "block";
+  link.innerText = "Download CSV";
 }
 
 // =========================
-// 📊 CSV → TABLE
+// 📊 FIXED CSV PARSER (THIS WAS YOUR ISSUE)
 // =========================
 function parseCSVToTable(csvText) {
-  const rows = csvText.trim().split("\n").slice(1);
+  const rows = csvText.trim().split("\n");
   const tbody = document.querySelector("#resultsTable tbody");
 
   tbody.innerHTML = "";
 
-  rows.forEach(row => {
-    if (!row) return;
+  for (let i = 1; i < rows.length; i++) {
+    if (!rows[i]) continue;
 
-    const cols = row.split(",");
-    const tr = document.createElement("tr");
+    const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
 
-    let confidence = cols[8];
-    let score = cols[9];
+    const email = cols[0] || "-";
+    const company = cols[1] || "-";
+    const linkedin = cols[2] || "";
+    const twitter = cols[3] || "";
+    const instagram = cols[4] || "";
+    const facebook = cols[5] || "";
+    const youtube = cols[6] || "";
+    const subscribers = cols[7] || "-";
+    const confidence = cols[8] || "low";
+    const score = cols[9] || "0";
 
     let color = "#ef4444";
     if (confidence === "high") color = "#22c55e";
     if (confidence === "medium") color = "#facc15";
 
+    const tr = document.createElement("tr");
+
     tr.innerHTML = `
-      <td>${cols[0]}</td>
-      <td>${cols[1]}</td>
-      <td>${makeLink(cols[2])}</td>
-      <td>${makeLink(cols[3])}</td>
-      <td>${makeLink(cols[4])}</td>
-      <td>${makeLink(cols[5])}</td>
-      <td>${makeLink(cols[6])}</td>
-      <td>${cols[7] || "-"}</td>
+      <td>${email}</td>
+      <td>${company}</td>
+      <td>${makeLink(linkedin)}</td>
+      <td>${makeLink(twitter)}</td>
+      <td>${makeLink(instagram)}</td>
+      <td>${makeLink(facebook)}</td>
+      <td>${makeLink(youtube)}</td>
+      <td>${subscribers}</td>
       <td style="color:${color}; font-weight:bold;">${confidence}</td>
       <td>${score}</td>
     `;
 
     tbody.appendChild(tr);
-  });
+  }
 }
 </script>
-
 </body>
 </html>
